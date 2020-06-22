@@ -191,8 +191,8 @@ class Evaluator:
 
     def cal_metric(self, label, pred, prob, returns):
         # exp_returns = self.expected_return(pred, prob, returns)
-        exp_returns, rts = self.exp_return_raw(pred, prob, returns)
-        # exp_returns, rts = self.exp_return_topn_raw(pred, prob, returns)
+        # exp_returns, rts = self.exp_return_raw(pred, prob, returns)
+        exp_returns, rts = self.exp_return_topn_raw(pred, prob, returns)
         conf_mat = confusion_matrix(label, pred, labels=[i for i in range(self.n_labels)])
         acc, cpt_acc = self.get_acc(conf_mat)
         mac_f1, mic_f1 = self.get_f1(label, pred)
