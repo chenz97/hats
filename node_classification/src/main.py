@@ -18,7 +18,7 @@ def init_prediction_model(config):
     return model
 
 def main():
-    # os.environ['CUDA_VISIBLE_DEVICES'] = '3'
+    os.environ['CUDA_VISIBLE_DEVICES'] = '3'
     config = get_args()
     logger = set_logger(config)
     dataset = StockDataset(config)
