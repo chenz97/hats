@@ -98,17 +98,29 @@ class StockDataset():
         if model_phase >= tot_ph:
             print("Unsuitable test phase model_phase:%d | total_pahse:%d"%(model_phase, tot_ph))
             raise
-        train_size = int(self.config.test_size * self.config.train_proportion)
-        test_start_idx = model_phase * self.config.test_size
-        test_target_start_idx = test_start_idx
-        test_input_start_idx = test_target_start_idx - self.lookback
-        dev_target_start_idx = test_start_idx - self.config.dev_size
-        dev_input_start_idx = test_target_start_idx - self.lookback - self.config.dev_size
+        # train_size = int(self.config.test_size * self.config.train_proportion)
+        # test_start_idx = model_phase * self.config.test_size
+        # test_target_start_idx = test_start_idx
+        # test_input_start_idx = test_target_start_idx - self.lookback
+        # dev_target_start_idx = test_start_idx - self.config.dev_size
+        # dev_input_start_idx = test_target_start_idx - self.lookback - self.config.dev_size
+
+        train_size = int(self.config.test_size * self.config.train_proportion) - self.config.dev_size
+        test_end_idx = model_phase * self.config.test_size + self.lookback
+        test_start_idx = test_end_idx - self.config.test_size - self.lookback
+        dev_end_idx = test_end_idx - self.config.test_size
+        dev_start_idx = dev_end_idx - self.config.dev_size - self.lookback
+        train_end_idx = dev_end_idx - self.config.dev_size
+        train_start_idx = train_end_idx - train_size - self.lookback
+        self.train_label.append(np.expand_dims(label_df.iloc[train_start_idx:train_end_idx]['return'].values, 1))
+        self.dev_label.append(np.expand_dims(label_df.iloc[dev_start_idx:dev_end_idx]['return'].values, 1))
+        self.test_label.append(np.expand_dims(label_df.iloc[test_start_idx:test_end_idx]['return'].values, 1))
+
 
         all_rt = []
-        self.train_label.append(np.expand_dims(label_df.iloc[:dev_target_start_idx]['return'].values[-train_size-self.lookback:], 1))
-        self.dev_label.append(np.expand_dims(label_df.iloc[:test_target_start_idx]['return'].values[-self.dev_size-self.lookback:], 1))
-        self.test_label.append(np.expand_dims(label_df.iloc[test_input_start_idx:]['return'].values[-self.test_size-self.lookback:], 1))
+        # self.train_label.append(np.expand_dims(label_df.iloc[:dev_target_start_idx]['return'].values[-train_size-self.lookback:], 1))
+        # self.dev_label.append(np.expand_dims(label_df.iloc[:test_target_start_idx]['return'].values[-self.dev_size-self.lookback:], 1))
+        # self.test_label.append(np.expand_dims(label_df.iloc[test_input_start_idx:test_target_start_idx+self.test_size]['return'].values, 1))
 
         for ticker in ordered_ticker:
             if ticker == self.config.data_type:
@@ -117,23 +129,26 @@ class StockDataset():
             df = df.loc[(df.date>=y_data_date[0]) & (df.date<=y_data_date[1])]
             df = df[self.feature_list]
 
-            self.train_set.append(df.iloc[:dev_target_start_idx].values[-train_size-self.lookback:])
-            self.dev_set.append(df.iloc[:test_target_start_idx].values[-self.dev_size-self.lookback:])
-            self.test_set.append(df.iloc[test_input_start_idx:test_target_start_idx+self.test_size].values)
+            # self.train_set.append(df.iloc[:dev_target_start_idx].values[-train_size-self.lookback:])
+            # self.dev_set.append(df.iloc[:test_target_start_idx].values[-self.dev_size-self.lookback:])
+            # self.test_set.append(df.iloc[test_input_start_idx:test_target_start_idx+self.test_size].values)
+            self.train_set.append(df.iloc[train_start_idx:train_end_idx].values)
+            self.dev_set.append(df.iloc[dev_start_idx:dev_end_idx].values)
+            self.test_set.append(df.iloc[test_start_idx:test_end_idx].values)
 
         all_tr_rt = list()
         for tr_set in self.train_label:
             all_tr_rt += tr_set.tolist()
         self.tr_mean =  np.mean(all_tr_rt)
         self.tr_std = np.std(all_tr_rt)
-        self.threshold = list()
-        th_tot = np.sum(self.config.label_proportion)
-        tmp_rt = np.sort(all_tr_rt, axis=0)
-        tmp_th = 0
-
-        for th in self.config.label_proportion:
-            self.threshold.append(tmp_rt[int(len(all_tr_rt) * float(th+tmp_th) / th_tot - 1)][0])
-            tmp_th += th
+        # self.threshold = list()
+        # th_tot = np.sum(self.config.label_proportion)
+        # tmp_rt = np.sort(all_tr_rt, axis=0)
+        # tmp_th = 0
+        # for th in self.config.label_proportion:
+        #     self.threshold.append(tmp_rt[int(len(all_tr_rt) * float(th+tmp_th) / th_tot - 1)][0])
+        #     tmp_th += th
+        self.threshold = [-0.003, 0.003, 0.5]
 
         # check statistics
         tr_rt, ev_rt, te_rt = [], [], []

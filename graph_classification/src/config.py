@@ -26,7 +26,7 @@ def get_args():
                     default=[2,3,6,11,13,17,18,28,30,32,37,38,39,40,41,48,57,84,85,86])
     argp.add_argument('--max_relations', type=int, default=5)
     argp.add_argument('--min_train_period', type=int, default=300)
-    argp.add_argument('--label_proportion', nargs='+', type=int, required=True)
+    argp.add_argument('--label_proportion', nargs='+', type=int, default=[1, 1, 1])
     argp.add_argument('--stack_layer', type=int, default=1)
     argp.add_argument('--node_features', type=int, default=64)
     argp.add_argument('--use_bias', action='store_true', default=True)

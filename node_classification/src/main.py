@@ -53,7 +53,7 @@ def main():
     #Testing
     loader = tf.train.Saver(max_to_keep=None)
     loader.restore(sess, tf.train.latest_checkpoint(os.path.join(config.save_dir, exp_name)))
-    print("saved at {}".format(config.save_dir))
+    print("saved at {}/{}".format(config.save_dir, exp_name))
     print("load best evaluation model")
 
     test_loss, report_all, report_topk = evaluator.evaluate(sess, model, dataset, 'test', trainer.best_f1['neighbors'])

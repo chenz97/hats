@@ -58,6 +58,11 @@ class StockDataset():
         train_size = int(self.config.test_size * self.config.train_proportion) - self.config.dev_size
         # test_start_idx = model_phase * self.config.test_size  # TODO: should be model_phase * train_proportion?
         test_end_idx = model_phase * self.config.test_size + self.lookback
+        test_start_idx = test_end_idx - self.config.test_size - self.lookback
+        dev_end_idx = test_end_idx - self.config.test_size
+        dev_start_idx = dev_end_idx - self.config.dev_size - self.lookback
+        train_end_idx = dev_end_idx - self.config.dev_size
+        train_start_idx = train_end_idx - train_size - self.lookback
 
         # read market data
         all_rt = []
@@ -84,11 +89,6 @@ class StockDataset():
             # self.test_set.append(df.iloc[test_input_start_idx:test_target_start_idx+self.config.test_size].values)
             # self.test_label.append(np.expand_dims(label_df.iloc[test_input_start_idx:test_target_start_idx+self.config.test_size].values,1))
 
-            test_start_idx = test_end_idx - self.config.test_size - self.lookback
-            dev_end_idx = test_end_idx - self.config.test_size
-            dev_start_idx = dev_end_idx - self.config.dev_size - self.lookback
-            train_end_idx = dev_end_idx - self.config.dev_size
-            train_start_idx = train_end_idx - train_size - self.lookback
             self.train_set.append(df.iloc[train_start_idx:train_end_idx].values)
             self.train_label.append(np.expand_dims(label_df.iloc[train_start_idx:train_end_idx].values, 1))
             self.dev_set.append(df.iloc[dev_start_idx:dev_end_idx].values)
@@ -104,9 +104,9 @@ class StockDataset():
         self.tr_mean = np.mean(all_tr_rt)
         self.tr_std = np.std(all_tr_rt)
         self.threshold = list()
-        th_tot = np.sum(self.config.label_proportion)
-        tmp_rt = np.sort(all_tr_rt, axis=0)
-        tmp_th = 0
+        # th_tot = np.sum(self.config.label_proportion)
+        # tmp_rt = np.sort(all_tr_rt, axis=0)
+        # tmp_th = 0
         # for th in self.config.label_proportion:
         #     self.threshold.append(tmp_rt[int(len(all_tr_rt)*float(th+tmp_th)/th_tot-1)][0])
         #     tmp_th += th

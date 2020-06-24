@@ -20,27 +20,27 @@ class BaseTrain:
             loss, report = self.train_epoch()
             self.sess.run(self.model.increment_cur_epoch_tensor)
             if cur_epoch % self.config.print_step == 0:
-                pred_rate, acc, cpt_acc, mac_f1, mic_f1, exp_rt = report
-                logstr = 'EPOCH {} TRAIN ALL \nloss : {:2.4f} accuracy : {:2.4f} hit ratio : {:2.4f} pred_rate : {} macro f1 : {:2.4f} micro f1 : {:2.4f} expected return : {:2.4f}'\
-                        .format(cur_epoch+1,loss,acc,cpt_acc,pred_rate,mac_f1,mic_f1, exp_rt)
+                pred_rate, acc, cpt_acc, mac_f1, mic_f1, exp_rt, sharpe = report
+                logstr = 'EPOCH {} TRAIN ALL \nloss : {:2.4f} accuracy : {:2.4f} hit ratio : {:2.4f} pred_rate : {} macro f1 : {:2.4f} micro f1 : {:2.4f} expected return : {:2.4f} sharpe : {:2.4f}'\
+                        .format(cur_epoch+1,loss,acc,cpt_acc,pred_rate,mac_f1,mic_f1, exp_rt, sharpe)
                 self.logger.info(logstr)
 
             if cur_epoch % self.config.eval_step == 0:
                 te_loss, report = self.evaluator.evaluate(self.sess, self.model, self.data, 'eval')
-                te_pred_rate, te_acc, te_cpt_acc, te_mac_f1, te_mic_f1, te_exp_rt = report
+                te_pred_rate, te_acc, te_cpt_acc, te_mac_f1, te_mic_f1, te_exp_rt, te_sharpe = report
 
-                logstr = '\n\n EPOCH {} EVAL ALL \nloss : {:2.4f} accuracy : {:2.4f} hit ratio : {:2.4f} pred_rate : {} macro f1 : {:2.4f} micro f1 : {:2.4f} expected return : {:2.4f}'\
-                        .format(cur_epoch+1,te_loss,te_acc,te_cpt_acc,te_pred_rate,te_mac_f1, te_mic_f1,te_exp_rt)
+                logstr = '\n\n EPOCH {} EVAL ALL \nloss : {:2.4f} accuracy : {:2.4f} hit ratio : {:2.4f} pred_rate : {} macro f1 : {:2.4f} micro f1 : {:2.4f} expected return : {:2.4f} sharpe : {:2.4f}'\
+                        .format(cur_epoch+1,te_loss,te_acc,te_cpt_acc,te_pred_rate,te_mac_f1, te_mic_f1,te_exp_rt, te_sharpe)
                 self.logger.info(logstr)
                 te_loss_hist.append(te_loss)
                 te_acc_hist.append(te_acc)
 
                 if te_mac_f1 > prev:
-                    if cur_epoch < 10:
-                        continue
+                    # if cur_epoch < 10:
+                    #     continue
                     prev = te_mac_f1
                     self.model.save(self.sess)
-                    time.sleep(5)
+                    # time.sleep(5)
 
                     self.best_f1['all']['acc'] = report[1]
                     self.best_f1['all']['hit'] = report[2]

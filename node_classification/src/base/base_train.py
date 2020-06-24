@@ -45,7 +45,7 @@ class BaseTrain:
                     #    continue
                     prev = te_mac_f1
                     self.model.save(self.sess)
-                    time.sleep(5)
+                    # time.sleep(5)
                     self.best_f1['topk']['acc'] = report_topk[1]
                     self.best_f1['topk']['hit'] = report_topk[2]
                     self.best_f1['topk']['macroF1'] = report_topk[3]

@@ -55,7 +55,6 @@ class GEvaluator:
             rts.append(rt)
 
         report = self.metric(np.concatenate(labels), np.concatenate(preds), np.concatenate(probs), np.concatenate(rts))
-
         return np.mean(losses), report
 
     def get_f1(self, y, y_):
@@ -84,6 +83,24 @@ class GEvaluator:
         long_rts = (returns[long_half_idx]*(pred[long_half_idx]==(self.n_labels-1))).mean()
         return (short_rts + long_rts)
 
+    def exp_return_raw(self, pred, prob, returns):
+        n_mid = prob.shape[0]//2
+        short_half_idx = np.argsort(prob[:, 0])[-n_mid:]
+        long_half_idx = np.argsort(prob[:,-1])[-n_mid:]
+        short_rts = (returns[short_half_idx]*(pred[short_half_idx]==0)) * (-1)
+        long_rts = (returns[long_half_idx]*(pred[long_half_idx]==(self.n_labels-1)))
+        rts = np.concatenate((short_rts, long_rts), 0)  # (n_mid*2, )
+        return (short_rts.mean() + long_rts.mean()), rts
+
+    def sharpe(self, rts):
+        # rts = np.concatenate(rts, 0)
+        mean = rts.mean()
+        std = rts.std()
+        days = 252
+        rfr = 0.007 / days
+        sharpe = (mean - rfr) * np.sqrt(days) / std
+        return sharpe
+
     def filter_topk(self, label, pred, prob, returns, topk):
         short_k_idx = np.argsort(prob[:,0])[-topk:]
         long_k_idx = np.argsort(prob[:,-1])[-topk:]
@@ -91,12 +108,14 @@ class GEvaluator:
         return label[topk_idx], pred[topk_idx], prob[topk_idx], returns[topk_idx]
 
     def cal_metric(self, label, pred, prob, returns):
-        exp_returns = self.expected_return(pred, prob, returns)
+        # exp_returns = self.expected_return(pred, prob, returns)
+        exp_returns, rts = self.exp_return_raw(pred, prob, returns)
+        sharpe = self.sharpe(rts)
         conf_mat = confusion_matrix(label, pred, labels=[i for i in range(self.n_labels)])
         acc, cpt_acc = self.get_acc(conf_mat)
         mac_f1, mic_f1 = self.get_f1(label, pred)
         pred_rate = [(pred==i).sum()/pred.shape[0] for i in range(self.n_labels)]
-        return pred_rate, acc, cpt_acc, mac_f1, mic_f1, exp_returns
+        return pred_rate, acc, cpt_acc, mac_f1, mic_f1, exp_returns, sharpe
 
     def metric(self, label, pred, prob, returns, topk=10):
         metric_all = self.cal_metric(label, pred, prob, returns)
