@@ -19,7 +19,9 @@ class Evaluator:
                 for cpn_idx, neighbors in enumerate(rel_neighbors):
                     short = max(0, k-neighbors.shape[0])
                     if short: # less neighbors than k
-                        neighbors = np.expand_dims(np.concatenate([neighbors, np.zeros(short)]),0)
+                        # neighbors = np.expand_dims(np.concatenate([neighbors, np.zeros(short)]),0)
+                        fill_val = np.full(short, -1.)
+                        neighbors = np.expand_dims(np.concatenate([neighbors, fill_val]), 0)
                         rel_neighbors_batch.append(neighbors)
                     else:
                         neighbors = np.expand_dims(np.random.choice(neighbors, k),0)
@@ -58,11 +60,18 @@ class Evaluator:
             probs.append(prob)
         return np.array(preds), np.array(probs)
 
-    def evaluate(self, sess, model, data, phase, neighbors=None):
+    def evaluate(self, sess, model, data, phase, neighbors=None, demo=False):
         all_x, all_y, all_rt = next(data.get_batch(phase, self.config.lookback))
         # in evaluation batch is whole dataset of a single company
         losses, accs, cpt_accs, pred_rates, mac_f1, mic_f1, exp_rts, rts= [], [], [], [], [], [], [], []
         accs_k, cpt_accs_k, pred_rates_k, mac_f1_k, mic_f1_k, exp_rts_k, rts_k = [], [], [], [], [], [], []
+
+        gts = []
+        preds = []
+        # gt_rt = []
+
+        if not neighbors:
+            neighbors = self.sample_neighbors(data)  # (#rel, #node, k), sampled randomly, can also be put into dataset
         for x, y, rt in zip(all_x, all_y, all_rt):
             feed_dict = self.create_feed_dict(model, data, x, y, phase, neighbors)
 
@@ -87,8 +96,22 @@ class Evaluator:
             exp_rts_k.append(metrics_topk[4])
             rts_k.append(metrics_topk[5])
 
+            if demo:
+                gts.append(label[0])
+                preds.append(pred[0])
+                # gt_rt.append(rt[0])
+
         sharpe = self.sharpe(rts)
         sharpe_k = self.sharpe(rts_k)
+
+        if demo:
+            with open('comp.txt', 'w') as f:
+                f.write('pred:\n')
+                f.writelines(["%s " % item for item in preds])
+                f.write('\n')
+                f.write('gt:\n')
+                f.writelines(["%s " % item for item in gts])
+                f.write('\n')
 
         report_all = [np.around(np.array(pred_rates).mean(0),decimals=4), np.mean(accs), np.mean(cpt_accs), np.mean(mac_f1), np.mean(mic_f1), np.mean(exp_rts), sharpe]
         report_topk = [np.around(np.array(pred_rates_k).mean(0),decimals=4), np.mean(accs_k), np.mean(cpt_accs_k), np.mean(mac_f1_k), np.mean(mic_f1_k), np.mean(exp_rts_k), sharpe_k]

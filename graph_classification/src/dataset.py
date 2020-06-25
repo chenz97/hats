@@ -89,15 +89,15 @@ class StockDataset():
 
         label_df = pd.read_csv(os.path.join(self.mkt_data_dir, '{}.csv'.format(self.data_type)))
         y_data_date = [label_df.date.iloc[0],label_df.date.iloc[-1]]
-        date_len = label_df.loc[(label_df.date>=y_data_date[0]) & (label_df.date<=y_data_date[1])].shape[0]
-        tot_ph = int(date_len / self.config.test_size)
+        data_len = label_df.loc[(label_df.date>=y_data_date[0]) & (label_df.date<=y_data_date[1])].shape[0]
+        tot_ph = int(data_len / self.config.test_size)
         if tot_ph < self.config.train_proportion + 1:
             print ("Unsuitable train-test size")
             raise
         model_phase = math.ceil(self.config.test_phase + self.config.train_proportion)
-        if model_phase >= tot_ph:
-            print("Unsuitable test phase model_phase:%d | total_pahse:%d"%(model_phase, tot_ph))
-            raise
+        # if model_phase >= tot_ph:
+        #     print("Unsuitable test phase model_phase:%d | total_pahse:%d"%(model_phase, tot_ph))
+        #     raise
         # train_size = int(self.config.test_size * self.config.train_proportion)
         # test_start_idx = model_phase * self.config.test_size
         # test_target_start_idx = test_start_idx
@@ -107,6 +107,9 @@ class StockDataset():
 
         train_size = int(self.config.test_size * self.config.train_proportion) - self.config.dev_size
         test_end_idx = model_phase * self.config.test_size + self.lookback
+        if test_end_idx >= data_len:
+            print("Unsuitable test phase model_phase:%d | total_pahse:%d" % (model_phase, tot_ph))
+            raise
         test_start_idx = test_end_idx - self.config.test_size - self.lookback
         dev_end_idx = test_end_idx - self.config.test_size
         dev_start_idx = dev_end_idx - self.config.dev_size - self.lookback
@@ -141,14 +144,15 @@ class StockDataset():
             all_tr_rt += tr_set.tolist()
         self.tr_mean =  np.mean(all_tr_rt)
         self.tr_std = np.std(all_tr_rt)
-        # self.threshold = list()
-        # th_tot = np.sum(self.config.label_proportion)
-        # tmp_rt = np.sort(all_tr_rt, axis=0)
-        # tmp_th = 0
-        # for th in self.config.label_proportion:
-        #     self.threshold.append(tmp_rt[int(len(all_tr_rt) * float(th+tmp_th) / th_tot - 1)][0])
-        #     tmp_th += th
-        self.threshold = [-0.003, 0.003, 0.5]
+        self.threshold = list()
+        th_tot = np.sum(self.config.label_proportion)
+        tmp_rt = np.sort(all_tr_rt, axis=0)
+        tmp_th = 0
+        for th in self.config.label_proportion:
+            self.threshold.append(tmp_rt[int(len(all_tr_rt) * float(th+tmp_th) / th_tot - 1)][0])
+            tmp_th += th
+        # self.threshold = [-0.003, 0.003, 0.5]
+        self.threshold = [-0.001, 0.003, 0.5]
 
         # check statistics
         tr_rt, ev_rt, te_rt = [], [], []

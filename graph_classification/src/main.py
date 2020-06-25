@@ -22,6 +22,7 @@ def init_prediction_model(config):
     return model
 
 def main():
+    # os.environ['CUDA_VISIBLE_DEVICES'] = '3'
     config = get_args()
     logger = set_logger(config)
     dataset = StockDataset(config)
@@ -59,6 +60,7 @@ def main():
     #Testing
     loader = tf.train.Saver(max_to_keep=None)
     loader.restore(sess, tf.train.latest_checkpoint(os.path.join(config.save_dir, exp_name)))
+    print("saved at {}/{}".format(config.save_dir, exp_name))
     print("load best evaluation model")
     test_loss, report = evaluator.evaluate(sess, model, dataset, 'test')
     te_pred_rate, te_acc, te_cpt_acc, te_mac_f1, te_mic_f1, te_exp_rt, te_sharpe = report

@@ -58,8 +58,8 @@ class HATS(BaseModel):
     def get_relation_rep(self, state):
         # input state [Node, Original Feat Dims]
         with tf.variable_scope('graph_ops'):
+            neighbors = tf.nn.embedding_lookup(state, self.rel_mat)
             if self.feat_attention:
-                neighbors = tf.nn.embedding_lookup(state, self.rel_mat)
                 # exp_state [1, Nodes, 1, Feat dims]
                 exp_state = tf.expand_dims(tf.expand_dims(state[1:], 1), 0)
                 exp_state = tf.tile(exp_state, [self.num_relations, 1, self.max_k, 1])
@@ -71,7 +71,9 @@ class HATS(BaseModel):
                 att_mask_mat = tf.to_float(tf.expand_dims(tf.sequence_mask(self.rel_num, self.max_k), -1))
                 att_score = tf.nn.softmax(score, 2)
                 all_rel_rep = tf.reduce_sum(neighbors*att_score, 2) / tf.expand_dims((tf.to_float(self.rel_num)+1e-10), -1)
-
+            else:
+                all_rel_rep = tf.reduce_mean(neighbors, 2) / tf.expand_dims((tf.to_float(self.rel_num) + 1e-10), -1)
+                
         return all_rel_rep
 
     def get_relations_rep(self, state):
