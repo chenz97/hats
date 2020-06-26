@@ -37,10 +37,11 @@ class GEvaluator:
                         model.keep_prob: self.keep_prob}
         return feed_dict
 
-    def evaluate(self, sess, model, data, phase):
+    def evaluate(self, sess, model, data, phase, demo=False):
         all_x, all_y, all_rt = next(data.get_batch(phase, self.config.lookback))
         # in evaluation batch is whole dataset of a single company
         losses, labels, preds, probs, rts = list(), list(), list(), list(), list()
+
         for b_idx, (x, y, rt) in enumerate(zip(all_x, all_y, all_rt)):
             feed_dict = self.create_feed_dict(model, data,x,y)
             # feed_dict[model.state] = self.state_dict[phase][b_idx]
@@ -53,6 +54,15 @@ class GEvaluator:
             preds.append(pred)
             probs.append(prob)
             rts.append(rt)
+
+        if demo:
+            with open('comp.txt', 'w') as f:
+                f.write('pred:\n')
+                f.writelines(["%s " % item for item in preds])
+                f.write('\n')
+                f.write('gt:\n')
+                f.writelines(["%s " % item for item in labels])
+                f.write('\n')
 
         report = self.metric(np.concatenate(labels), np.concatenate(preds), np.concatenate(probs), np.concatenate(rts))
         return np.mean(losses), report

@@ -70,9 +70,9 @@ def main():
     #Print Log
     with open('%s_log.log'%model_name, 'a') as out_:
         out_.write("%d phase\n"%(config.test_phase))
-        out_.write("%f\t%f\t%f\t%f\t%f\t%s\t%f\t%f\t%f\t%f\t%f\t%s\t%d\n"%(
-            report_all[1], report_all[2], report_all[3], report_all[4], report_all[5], str(report_all[0]),
-            report_topk[1], report_topk[2], report_topk[3], report_topk[4], report_topk[5], str(report_topk[0]),
+        out_.write("%f\t%f\t%f\t%f\t%f\t%f\t%s\t%f\t%f\t%f\t%f\t%f\t%f\t%s\t%d\n"%(
+            report_all[1], report_all[2], report_all[3], report_all[4], report_all[5], report_all[6], str(report_all[0]),
+            report_topk[1], report_topk[2], report_topk[3], report_topk[4], report_topk[5], report_topk[6], str(report_topk[0]),
             trainer.best_f1['epoch']))
 
 if __name__ == '__main__':

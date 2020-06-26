@@ -48,31 +48,30 @@ def main():
         slim.model_analyzer.analyze_vars(model_vars, print_info=True) # print the name and shapes of the variables
     model_summary()
 
-    if config.mode == 'train':
-        if 'graph' in config.model_type:
-            evaluator = GEvaluator(config, logger)
-            trainer = GTrainer(sess, model, dataset, config, logger, evaluator)
-        else:
-            evaluator = Evaluator(config, logger)
-            trainer = Trainer(sess, model, dataset, config, logger, evaluator)
-    trainer.train()
+    if 'graph' in config.model_type:
+        evaluator = GEvaluator(config, logger)
+        # trainer = GTrainer(sess, model, dataset, config, logger, evaluator)
+    else:
+        evaluator = Evaluator(config, logger)
+        # trainer = Trainer(sess, model, dataset, config, logger, evaluator)
+# trainer.train()
 
     #Testing
     loader = tf.train.Saver(max_to_keep=None)
     loader.restore(sess, tf.train.latest_checkpoint(os.path.join(config.save_dir, exp_name)))
     print("saved at {}/{}".format(config.save_dir, exp_name))
     print("load best evaluation model")
-    test_loss, report = evaluator.evaluate(sess, model, dataset, 'test')
+    test_loss, report = evaluator.evaluate(sess, model, dataset, 'test', True)
     te_pred_rate, te_acc, te_cpt_acc, te_mac_f1, te_mic_f1, te_exp_rt, te_sharpe = report
-    logstr = 'EPOCH {} TEST ALL \nloss : {:2.4f} accuracy : {:2.4f} hit ratio : {:2.4f} pred_rate : {} macro f1 : {:2.4f} micro f1 : {:2.4f} expected return : {:2.4f} sharpe : {:2.4f}'\
-            .format(trainer.best_f1['epoch'],test_loss,te_acc,te_cpt_acc,te_pred_rate,te_mac_f1,te_mic_f1,te_exp_rt, te_sharpe)
+    logstr = 'TEST ALL \nloss : {:2.4f} accuracy : {:2.4f} hit ratio : {:2.4f} pred_rate : {} macro f1 : {:2.4f} micro f1 : {:2.4f} expected return : {:2.4f} sharpe : {:2.4f}'\
+            .format(test_loss,te_acc,te_cpt_acc,te_pred_rate,te_mac_f1,te_mic_f1,te_exp_rt, te_sharpe)
     logger.info(logstr)
 
-    with open('%s_log.log'%config.GNN_model+'_'+config.model_type+'_'+config.data_type+'_'+config.price_model+'_'+str(config.test_phase), 'a') as out_:
-        out_.write("%d phase\n"%(config.test_phase))
-        out_.write("%f\t%f\t%f\t%f\t%f\t%f\t%s\t%d\n"%(
-            report[1], report[2], report[3], report[4], report[5], report[6], str(report[0]),
-            trainer.best_f1['epoch']))
+    # with open('%s_log.log'%config.GNN_model+'_'+config.model_type+'_'+config.data_type+'_'+config.price_model+'_'+str(config.test_phase), 'a') as out_:
+    #     out_.write("%d phase\n"%(config.test_phase))
+    #     out_.write("%f\t%f\t%f\t%f\t%f\t%s\t%d\n"%(
+    #         report[1], report[2], report[3], report[4], report[5], str(report[0]),
+    #         trainer.best_f1['epoch']))
 
 if __name__ == "__main__":
     main()

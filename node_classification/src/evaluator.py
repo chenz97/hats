@@ -70,7 +70,7 @@ class Evaluator:
         preds = []
         # gt_rt = []
 
-        if not neighbors:
+        if neighbors is not None:
             neighbors = self.sample_neighbors(data)  # (#rel, #node, k), sampled randomly, can also be put into dataset
         for x, y, rt in zip(all_x, all_y, all_rt):
             feed_dict = self.create_feed_dict(model, data, x, y, phase, neighbors)
